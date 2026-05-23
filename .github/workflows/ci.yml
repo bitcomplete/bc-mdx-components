@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Verify IIFE bundle is self-contained
+        run: |
+          test -f dist/bundle.iife.js
+          # Ensure the bundle defines compileMDX on globalThis.
+          node -e "const fs=require('fs');const src=fs.readFileSync('dist/bundle.iife.js','utf8');if(!src.includes('compileMDX'))process.exit(1)"

@@ -1,0 +1,78 @@
+# Move the billing service to async webhooks
+
+<TLDR>
+The billing service currently blocks request handlers for up to 8 seconds while it talks to Stripe. Move the Stripe call into a queued worker so request handlers return in <100ms. Two PRs: queue plumbing + worker.
+</TLDR>
+
+## Why now
+
+<Callout type="warning" title="p99 latency is breaching SLO">
+We've blown the 1.5s p99 SLO every weekday morning for the past three weeks. Each breach maps to a Stripe API slowdown.
+</Callout>
+
+<KPIGroup>
+  <KPI value="8.3s" label="p99 today" tone="err" />
+  <KPI value="1.5s" label="p99 SLO" />
+  <KPI value="42ms" label="p99 after" tone="ok" trend="projected" />
+  <KPI value="2" label="PRs needed" />
+</KPIGroup>
+
+## Approach
+
+<Compare>
+  <Option label="Status quo (synchronous)">
+    Request handler calls Stripe directly. When Stripe slows, we slow. Easy to reason about, hard to scale.
+    <Tag color="warning">latency-bound</Tag>
+  </Option>
+  <Option label="Async webhook (proposed)">
+    Request handler queues a job, returns immediately. Worker calls Stripe. Stripe slowness no longer leaks into the request path.
+    <Tag color="success">SLO-safe</Tag>
+  </Option>
+</Compare>
+
+## Plan
+
+<Steps>
+  <Step title="Add the `billing-events` queue" status="done">
+    SQS FIFO, dead-letter queue with 5-attempt cap.
+  </Step>
+  <Step title="Carve out the Stripe-calling code into a worker binary" status="doing">
+    `cmd/billing-worker`. Reads from the queue, calls Stripe, writes the receipt to Postgres.
+  </Step>
+  <Step title="Switch handlers to enqueue instead of call" status="todo">
+    Behind a feature flag so we can roll back per-tenant.
+  </Step>
+  <Step title="Cut over + watch the dashboards" status="todo">
+    First 5% of traffic for a day, then ramp 25 / 50 / 100 over the week.
+  </Step>
+</Steps>
+
+## Sample tool trace from the spike
+
+<ToolCall name="bash" status="ok" timing="0.4s" args='go test ./internal/billing/ -count=10 -race' />
+<ToolCall name="edit" status="ok" timing="—" args="internal/billing/worker.go" />
+<ToolCall name="bash" status="fail" timing="0.3s" args="docker compose up -d sqs">
+  LocalStack image not pulled yet; first run is 2-3 min slower.
+</ToolCall>
+
+## Findings
+
+<Finding code="BILL-014" title="Retries on the synchronous path can DDoS Stripe" severity="high">
+  Current handler retries 3× with exponential backoff. Under a Stripe slowdown, 3× the inbound rate hits Stripe — exactly when Stripe least wants traffic. Worker-side retries should use a token bucket.
+</Finding>
+
+<Finding code="BILL-015" title="No idempotency key on the existing call" severity="medium">
+  Without an idempotency key, a worker-side retry can double-charge. Add one keyed on (tenant_id, charge_id) before flipping the cutover flag.
+</Finding>
+
+## Timeline
+
+<Timeline>
+  <Event time="Week 1" title="Queue + worker land behind feature flag" tone="info" />
+  <Event time="Week 2" title="Cutover ramp begins (5% → 100%)" tone="ok" />
+  <Event time="Week 3" title="Old sync code path removed" tone="info" />
+</Timeline>
+
+---
+
+<Status state="info">In progress</Status>
