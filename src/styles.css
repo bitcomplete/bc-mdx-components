@@ -47,7 +47,12 @@
   max-width: 56rem;
   margin: 0 auto;
   padding: 3rem 1.5rem 6rem;
+  /* Long URLs / hashes shouldn't blow out the column. */
+  overflow-wrap: anywhere;
 }
+.bc-doc *,
+.bc-doc *::before,
+.bc-doc *::after{box-sizing:border-box}
 
 .bc-doc h1{font-size:1.9rem;margin:1.2em 0 .4em;line-height:1.2}
 .bc-doc h2{font-size:1.45rem;margin:1.5em 0 .4em;line-height:1.25}
@@ -55,8 +60,55 @@
 .bc-doc p{margin:.7em 0}
 .bc-doc a{color:var(--bc-accent);text-decoration:none}
 .bc-doc a:hover{text-decoration:underline}
-.bc-doc code{font-family:var(--bc-mono);font-size:.92em;background:var(--bc-line-soft);padding:.1em .3em;border-radius:3px}
+.bc-doc code{font-family:var(--bc-mono);font-size:.92em;background:var(--bc-line-soft);padding:.1em .3em;border-radius:3px;overflow-wrap:anywhere}
 .bc-doc hr{border:0;border-top:1px solid var(--bc-line);margin:2em 0}
+
+/* Default blockquote — user messages in transcripts land here. */
+.bc-doc blockquote{
+  margin:.8em 0;
+  padding:.6em 1em;
+  border-left:3px solid var(--bc-line);
+  background:var(--bc-line-soft);
+  color:var(--bc-fg);
+  border-radius:0 var(--bc-radius-sm) var(--bc-radius-sm) 0;
+}
+.bc-doc blockquote > :first-child{margin-top:0}
+.bc-doc blockquote > :last-child{margin-bottom:0}
+
+/* Markdown tables — narrow viewports get a horizontal scrollbar instead
+ * of cells collapsing. */
+.bc-doc table{
+  display:block;
+  max-width:100%;
+  overflow-x:auto;
+  border-collapse:collapse;
+  margin:1em 0;
+}
+.bc-doc th,
+.bc-doc td{
+  padding:.4em .7em;
+  border:1px solid var(--bc-line);
+  text-align:left;
+}
+.bc-doc th{background:var(--bc-line-soft);font-weight:600}
+
+/* Any <pre> in the document — including the bare ones authors drop in —
+ * wraps long lines instead of forcing horizontal scroll. The override on
+ * .bc-code below keeps the look consistent. */
+.bc-doc pre{
+  background:var(--bc-line-soft);
+  border-radius:var(--bc-radius);
+  padding:.75rem 1rem;
+  margin:1em 0;
+  font-family:var(--bc-mono);
+  font-size:.85rem;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-width:100%;
+}
+.bc-doc pre code{background:none;padding:0;font-size:inherit}
 
 /* Section */
 .bc-section{margin:2em 0}
@@ -187,13 +239,16 @@
   background: var(--bc-line-soft);
   border-radius: var(--bc-radius);
   padding: .85rem 1rem;
-  overflow-x: auto;
   font-family: var(--bc-mono);
   font-size: .85rem;
   line-height: 1.5;
   margin: 1em 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
-.bc-code code{background:none;padding:0}
+.bc-code code{background:none;padding:0;font-size:inherit}
 
 /* Diagram */
 .bc-diagram{margin:1.5em 0}
@@ -236,17 +291,39 @@
   padding:.8rem 1rem;
   margin:.6em 0;
   font-size:.92rem;
+  max-width:100%;
+  min-width:0;
+  overflow:hidden;
 }
-.bc-tool-head{display:flex;align-items:center;gap:.8em;justify-content:space-between}
-.bc-tool-name{font-family:var(--bc-mono);font-weight:600;color:var(--bc-accent)}
+.bc-tool-head{
+  display:flex;
+  align-items:center;
+  gap:.8em;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.bc-tool-name{font-family:var(--bc-mono);font-weight:600;color:var(--bc-accent);overflow-wrap:anywhere;min-width:0}
 .bc-tool-timing{color:var(--bc-muted);font-size:.85em}
-.bc-tool-status{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;padding:.15em .55em;border-radius:999px;background:var(--bc-line-soft);color:var(--bc-muted)}
+.bc-tool-status{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;padding:.15em .55em;border-radius:999px;background:var(--bc-line-soft);color:var(--bc-muted);flex-shrink:0}
 .bc-tool-status-running{background:var(--bc-info-bg);color:var(--bc-info)}
 .bc-tool-status-ok{background:var(--bc-success-bg);color:var(--bc-success)}
 .bc-tool-status-fail{background:var(--bc-danger-bg);color:var(--bc-danger)}
-.bc-tool-args{margin:.5em 0 0;font-size:.8rem;background:var(--bc-line-soft);padding:.5em .75em;border-radius:var(--bc-radius-sm);font-family:var(--bc-mono);overflow-x:auto}
-.bc-tool-body{margin-top:.5em}
-.bc-tool-tree{padding-left:1.25rem;border-left:1px dashed var(--bc-line);margin:.6em 0}
+.bc-tool-args{
+  margin:.5em 0 0;
+  font-size:.8rem;
+  background:var(--bc-line-soft);
+  padding:.5em .75em;
+  border-radius:var(--bc-radius-sm);
+  font-family:var(--bc-mono);
+  line-height:1.45;
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-width:100%;
+}
+.bc-tool-body{margin-top:.5em;min-width:0}
+.bc-tool-body pre{margin:.4em 0;font-size:.8rem;line-height:1.45;background:var(--bc-line-soft)}
+.bc-tool-tree{padding-left:1.25rem;border-left:1px dashed var(--bc-line);margin:.6em 0;min-width:0}
 .bc-tool-tree > .bc-tool{position:relative}
 .bc-tool-tree > .bc-tool::before{
   content:"";
