@@ -175,15 +175,22 @@
   padding: 1rem;
   border-radius: var(--bc-radius);
   border: 1px solid var(--bc-line);
+  /* In a grid track, content can otherwise refuse to shrink below its
+   * intrinsic width, which is what was bursting the cards on long
+   * text values. */
+  min-width: 0;
 }
 .bc-kpi-value{
   font-family: var(--bc-mono);
   font-size: 1.9rem;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.1;
+  /* Wrap rather than overflow when the value isn't a short number. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
-.bc-kpi-label{font-size:.85rem;color:var(--bc-muted);margin-top:.4em;text-transform:uppercase;letter-spacing:.05em}
-.bc-kpi-trend{font-size:.85rem;margin-top:.4em;color:var(--bc-muted)}
+.bc-kpi-label{font-size:.85rem;color:var(--bc-muted);margin-top:.4em;text-transform:uppercase;letter-spacing:.05em;overflow-wrap:anywhere}
+.bc-kpi-trend{font-size:.85rem;margin-top:.4em;color:var(--bc-muted);overflow-wrap:anywhere}
 .bc-kpi-ok .bc-kpi-value{color:var(--bc-success)}
 .bc-kpi-warn .bc-kpi-value{color:var(--bc-warn)}
 .bc-kpi-err .bc-kpi-value{color:var(--bc-danger)}
