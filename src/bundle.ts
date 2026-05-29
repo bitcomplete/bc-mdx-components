@@ -3,6 +3,8 @@
 // bundled in (tsup's `noExternal: [/.*/]`). Exposes a synchronous
 // `compileMDX(source)` on `globalThis` that returns `{ html, css }`.
 
+// Polyfills first — must execute before React loads. See polyfills.ts.
+import "./polyfills.js";
 import { renderMDX } from "./compile.js";
 import { stylesheet } from "./components/styles.js";
 
