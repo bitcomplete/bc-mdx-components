@@ -1,25 +1,22 @@
-// Editorial finding card: severity pill + mono code + serif title, with
-// a thin coloured left rule.
+// Agentic Craft renders findings as plain bulleted prose, not boxed
+// cards. Format: `• <code>CODE</code> — <strong>title</strong>: body`.
+// Severity is signalled by a colored dot, not a pill.
+//
+// A free-standing <Finding> is wrapped in an <li> + spacing so it can
+// be mixed with markdown prose. A `<Findings>` collection groups them
+// in a tight list (the standard MDX form).
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 type Severity = "info" | "low" | "medium" | "high" | "critical";
 
-const sevBar: Record<Severity, string> = {
-  info: "border-l-sky-500/70",
-  low: "border-l-border",
-  medium: "border-l-amber-500/70",
-  high: "border-l-red-500/70",
-  critical: "border-l-red-600/80",
-};
-
-const sevPill: Record<Severity, string> = {
-  info: "bg-sky-500/10 text-sky-500",
-  low: "bg-muted text-muted-foreground",
-  medium: "bg-amber-500/10 text-amber-500",
-  high: "bg-red-500/10 text-red-500",
-  critical: "bg-red-600/15 text-red-600",
+const sevDotClass: Record<Severity, string> = {
+  info: "bg-sky-500",
+  low: "bg-muted-foreground/50",
+  medium: "bg-amber-500",
+  high: "bg-red-500",
+  critical: "bg-red-600",
 };
 
 function Finding({
@@ -29,54 +26,73 @@ function Finding({
   className,
   children,
   ...props
-}: React.ComponentProps<"article"> & {
+}: React.ComponentProps<"div"> & {
   code?: string;
   title: string;
   severity?: Severity;
 }) {
+  // Render as <div role="listitem"> so a bare <Finding> outside any
+  // <ul>/<ol> doesn't pick up the browser's default list marker.
   return (
-    <article
+    <div
+      role="listitem"
       data-slot="finding"
       data-severity={severity}
-      className={cn("my-4 border-l-2 pl-4 py-1", sevBar[severity], className)}
+      className={cn(
+        "relative my-2 pl-5 font-serif text-base text-foreground/85 leading-relaxed",
+        className,
+      )}
       {...props}
     >
-      <header className="flex items-baseline gap-3 flex-wrap">
-        {code ? (
+      <span
+        aria-hidden
+        className={cn(
+          "absolute left-0 top-[10px] inline-block size-1.5 rounded-full",
+          sevDotClass[severity],
+        )}
+      />
+      {code ? (
+        <>
           <code
             data-slot="finding-code"
-            className="font-mono text-xs text-muted-foreground"
+            className="font-mono text-sm font-medium text-foreground bg-transparent p-0"
           >
             {code}
-          </code>
-        ) : null}
-        <h3
-          data-slot="finding-title"
-          className="m-0 flex-1 font-serif text-base font-normal text-foreground"
-        >
-          {title}
-        </h3>
-        <span
-          data-slot="finding-severity"
-          className={cn(
-            "shrink-0 rounded-full px-2 py-0.5 font-sans text-[10px] font-medium uppercase tracking-wider",
-            sevPill[severity],
-          )}
-        >
-          {severity}
-        </span>
-      </header>
-      {children ? (
-        <div
-          data-slot="finding-body"
-          className="mt-1 font-serif text-base text-foreground/80"
-        >
-          {children}
-        </div>
+          </code>{" "}
+          <span className="text-muted-foreground">—</span>{" "}
+        </>
       ) : null}
-    </article>
+      <span className="font-medium text-foreground">{title}</span>
+      {children ? (
+        <>
+          <span className="text-muted-foreground">:</span>{" "}
+          <span data-slot="finding-body" className="text-muted-foreground">
+            {children}
+          </span>
+        </>
+      ) : null}
+    </div>
   );
 }
 
-export { Finding };
+// Optional wrapper — pulls a group of findings into a tighter
+// `role="list"` container with less surrounding spacing.
+function Findings({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      role="list"
+      data-slot="findings"
+      className={cn("my-6 space-y-0", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export { Finding, Findings };
 export type { Severity };

@@ -10,6 +10,7 @@
 // the upstream project publishes them.
 
 import * as React from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CommandLineIcon,
   CodeIcon,
@@ -20,8 +21,10 @@ import {
   Settings01Icon,
   GitBranchIcon,
   Database01Icon,
+  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
+import { cn } from "@/lib/utils.js";
 
 // Vendored from agentic-craft registry —
 // https://github.com/arielconti10/agentic-craft/tree/main/registry/base-nova/ui
@@ -36,23 +39,12 @@ export {
   ToolTreeContent,
 } from "./ui/tool-tree.js";
 
-import {
-  ToolCall as ToolCallPrimitive,
-  ToolCallLabel,
-  ToolCallContent,
-} from "./ui/tool-call.js";
-import {
-  ToolTree as ToolTreePrimitive,
-  ToolTreeTrigger,
-  ToolTreeContent,
-} from "./ui/tool-tree.js";
-
 export { TLDR } from "./ui/tldr.js";
 export { Callout } from "./ui/callout.js";
 export { KPI, KPIGroup } from "./ui/kpi.js";
 export { Steps, Step } from "./ui/steps.js";
 export { Compare, Option } from "./ui/compare.js";
-export { Finding } from "./ui/finding.js";
+export { Finding, Findings } from "./ui/finding.js";
 export { Approval } from "./ui/approval.js";
 export { Timeline, Event } from "./ui/timeline.js";
 export { Tag, Status } from "./ui/tag.js";
@@ -61,6 +53,13 @@ export { Section } from "./ui/section.js";
 export { Quote } from "./ui/quote.js";
 export { Code } from "./ui/code.js";
 export { Diagram } from "./ui/diagram.js";
+export {
+  Conversation,
+  UserMessage,
+  AssistantMessage,
+  SystemMessage,
+  Thinking,
+} from "./ui/conversation.js";
 
 // ── ToolCall MDX wrapper ─────────────────────────────────────────────
 // Our MDX API is flat: `<ToolCall name="bash" status="ok" timing="0.4s"
@@ -90,14 +89,43 @@ const iconByName: Record<string, IconSvgElement> = {
 
 type ToolStatus = "running" | "ok" | "fail" | "skip";
 
+// We render <details>/<summary> rather than the vendored React
+// ToolCall/ToolTree from agentic-craft. Their primitives use
+// React.useState for expand/collapse — that works in their Next.js
+// app but pin ships static HTML with no React runtime in the browser,
+// so the click handlers never fire. <details> gets the same UX for
+// free with no JS. We keep the same visual language and `data-slot`
+// markers so a future client-hydrated swap-in is mechanical.
+//
+// Following the agentic-craft Actions spec
+// (https://agentic-craft.vercel.app/actions):
+//   - Label is 14px sans, weight 400 — never bold, never function
+//     signature
+//   - Icons are monochrome muted; only `fail` switches to red
+//   - Duration is right-aligned in muted text. Failed calls prefix
+//     it with "failed ·"
+//   - Args + children are hidden until the row is expanded — only
+//     the label is visible by default
+//   - `fail` rows open by default so the error is immediately visible
+
+const statusIconClass: Record<ToolStatus, string> = {
+  running: "text-sky-500",
+  ok: "text-muted-foreground",
+  fail: "text-red-500",
+  skip: "text-muted-foreground/50",
+};
+
 export function ToolCall({
   name,
-  status,
+  label,
+  status = "ok",
   timing,
   args,
   children,
 }: {
   name: string;
+  /** Human-readable label override. Falls back to `name`. */
+  label?: string;
   status?: ToolStatus;
   timing?: string;
   args?: string;
@@ -105,52 +133,225 @@ export function ToolCall({
 }) {
   const icon: IconSvgElement =
     iconByName[name.toLowerCase()] ?? Settings01Icon;
-  const upstream: "running" | "completed" | "failed" =
-    status === "running"
-      ? "running"
-      : status === "fail"
-        ? "failed"
-        : "completed";
   const hasBody = !!(args || children);
-  return (
-    <ToolCallPrimitive
-      icon={icon}
-      status={upstream}
-      timestamp={timing}
-      defaultExpanded={hasBody}
-    >
-      <ToolCallLabel>
-        <span className="font-mono">{name}</span>
-        {args ? (
-          <span className="ml-2 text-muted-foreground/70 truncate">{args}</span>
-        ) : null}
-      </ToolCallLabel>
-      {hasBody ? (
-        <ToolCallContent>
-          {args ? (
-            <pre className="rounded-md bg-muted/50 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
-              {args}
-            </pre>
-          ) : null}
-          {children ? (
-            <div className="mt-2 font-serif text-sm text-foreground/80">
-              {children}
-            </div>
-          ) : null}
-        </ToolCallContent>
+  const displayLabel = label ?? name;
+  const isFail = status === "fail";
+
+  const timingText = timing
+    ? isFail
+      ? `failed · ${timing}`
+      : timing
+    : isFail
+      ? "failed"
+      : undefined;
+
+  const summary = (
+    <>
+      <span className="relative inline-flex size-5 shrink-0 items-center justify-center">
+        <HugeiconsIcon
+          icon={icon}
+          size={16}
+          strokeWidth={1.5}
+          className={cn(
+            "relative",
+            statusIconClass[status],
+            status === "running" && "animate-pulse",
+          )}
+        />
+      </span>
+      <span
+        data-slot="tool-call-label"
+        className={cn(
+          "min-w-0 flex-1 truncate font-sans text-sm font-normal",
+          isFail ? "text-red-400" : "text-foreground/90",
+        )}
+      >
+        {displayLabel}
+      </span>
+      {timingText ? (
+        <span
+          data-slot="tool-call-timing"
+          className={cn(
+            "shrink-0 font-sans text-xs tabular-nums",
+            isFail ? "text-red-400/80" : "text-muted-foreground",
+          )}
+        >
+          {timingText}
+        </span>
       ) : null}
-    </ToolCallPrimitive>
+      {hasBody ? (
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          size={14}
+          strokeWidth={1.5}
+          className="shrink-0 text-muted-foreground/60 transition-transform duration-150 [details[open]_&]:rotate-90"
+        />
+      ) : null}
+    </>
+  );
+
+  if (!hasBody) {
+    // Non-expandable row — still aligned with the others.
+    return (
+      <div
+        data-slot="tool-call"
+        data-status={status}
+        className="flex items-center gap-2 py-1.5"
+      >
+        {summary}
+      </div>
+    );
+  }
+
+  return (
+    <details
+      data-slot="tool-call"
+      data-status={status}
+      open={isFail || undefined}
+      className="group/tool"
+    >
+      <summary className="flex cursor-pointer items-center gap-2 py-1.5 list-none [&::-webkit-details-marker]:hidden">
+        {summary}
+      </summary>
+      <div data-slot="tool-call-content" className="pl-7 pt-1 pb-3 space-y-3">
+        {args ? <ToolCallArgs args={args} /> : null}
+        {children ? (
+          <ToolCallOutput isFail={isFail}>{children}</ToolCallOutput>
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
+// Args panel. If `args` parses as a JSON object, render as a definition
+// list (mono keys aligned, values wrap). Otherwise render the raw
+// string in a single mono code block. Both variants sit under a small
+// uppercase ARGS label.
+function ToolCallArgs({ args }: { args: string }) {
+  const kv = parseArgsAsKV(args);
+  return (
+    <section data-slot="tool-call-args">
+      <SectionLabel>args</SectionLabel>
+      {kv ? (
+        <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 rounded-md bg-muted/40 px-3 py-2 font-mono text-xs">
+          {kv.map(([k, v]) => (
+            <React.Fragment key={k}>
+              <dt className="text-muted-foreground select-none">{k}</dt>
+              <dd className="m-0 whitespace-pre-wrap break-words text-foreground">
+                {v}
+              </dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      ) : (
+        <pre className="m-0 rounded-md bg-muted/40 px-3 py-2 font-mono text-xs whitespace-pre-wrap break-words text-foreground">
+          {args}
+        </pre>
+      )}
+    </section>
+  );
+}
+
+function ToolCallOutput({
+  isFail,
+  children,
+}: {
+  isFail: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section data-slot="tool-call-output">
+      <SectionLabel tone={isFail ? "fail" : undefined}>
+        {isFail ? "error" : "output"}
+      </SectionLabel>
+      <div
+        className={cn(
+          "rounded-md bg-muted/40 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words [&_p]:font-mono [&_p]:text-xs [&_p]:m-0 [&_p+p]:mt-1.5",
+          isFail ? "text-red-400/90" : "text-foreground/90",
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function SectionLabel({
+  tone,
+  children,
+}: {
+  tone?: "fail";
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      data-slot="tool-call-section-label"
+      className={cn(
+        "mb-1 font-sans text-[10px] font-medium uppercase tracking-[0.1em]",
+        tone === "fail" ? "text-red-400/80" : "text-muted-foreground",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Try to detect "{...}" object-shaped JSON and return [key, valueString]
+// pairs. Values that aren't strings are JSON-stringified two-space
+// pretty so they wrap nicely in the dl. Returns null for anything we
+// can't safely treat as a key/value record.
+function parseArgsAsKV(args: string): Array<[string, string]> | null {
+  const trimmed = args.trim();
+  if (!(trimmed.startsWith("{") && trimmed.endsWith("}"))) return null;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const entries = Object.entries(parsed as Record<string, unknown>);
+    if (entries.length === 0) return null;
+    return entries.map(([k, v]) => [
+      k,
+      typeof v === "string" ? v : JSON.stringify(v, null, 2),
+    ]);
+  } catch {
+    return null;
+  }
+}
+
+// ── ToolCallGroup MDX wrapper ────────────────────────────────────────
+// AC's "Grouped" pattern: wrap N adjacent ToolCalls in a single
+// rounded card frame. No header, no toggle — the group exists purely
+// to visually associate the calls. Each child <details> still
+// toggles independently.
+
+export function ToolCallGroup({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      data-slot="tool-call-group"
+      className={cn(
+        "my-4 rounded-lg border border-border bg-card/30 px-4 py-2 divide-y divide-border/50",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 
 // ── ToolTree MDX wrapper ─────────────────────────────────────────────
-// MDX usage: `<ToolTree label="Running 3 in parallel">…ToolCalls…</ToolTree>`.
-// The vendored primitive wants explicit Trigger + Content children; the
-// wrapper supplies them.
+// Grouped tool calls with an explicit header — AC's "Running N tasks
+// in parallel" pattern. Children are indented with an L-connector
+// spine. Default collapsed.
 
 export function ToolTree({
   label = "Running tools",
-  defaultOpen = true,
   children,
 }: {
   label?: string;
@@ -158,9 +359,38 @@ export function ToolTree({
   children?: React.ReactNode;
 }) {
   return (
-    <ToolTreePrimitive defaultOpen={defaultOpen}>
-      <ToolTreeTrigger icon={GitBranchIcon}>{label}</ToolTreeTrigger>
-      <ToolTreeContent>{children}</ToolTreeContent>
-    </ToolTreePrimitive>
+    <details data-slot="tool-tree" className="my-3 group/tree">
+      <summary className="flex cursor-pointer items-center gap-2 py-1.5 list-none [&::-webkit-details-marker]:hidden">
+        <span className="relative inline-flex size-5 shrink-0 items-center justify-center">
+          <HugeiconsIcon
+            icon={GitBranchIcon}
+            size={16}
+            strokeWidth={1.5}
+            className="relative text-muted-foreground"
+          />
+        </span>
+        <span className="min-w-0 flex-1 truncate font-sans text-sm font-normal text-foreground/90">
+          {label}
+        </span>
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          size={14}
+          strokeWidth={1.5}
+          className="shrink-0 text-muted-foreground/60 transition-transform duration-150 [details[open]_&]:rotate-90"
+        />
+      </summary>
+      <div
+        data-slot="tool-tree-content"
+        className={cn(
+          "relative pl-7 mt-1 mb-1",
+          // Vertical spine + L connector for each direct child
+          "before:absolute before:left-2 before:top-1 before:bottom-3 before:w-px before:bg-border",
+          "[&>*]:relative",
+          "[&>*]:before:absolute [&>*]:before:left-[-20px] [&>*]:before:top-[15px] [&>*]:before:w-4 [&>*]:before:h-px [&>*]:before:bg-border",
+        )}
+      >
+        {children}
+      </div>
+    </details>
   );
 }
