@@ -4,6 +4,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Summary box at the top of a document. Use one — at most one — per
+ * share to let readers grasp the whole thing in a sentence before
+ * deciding to dive in.
+ *
+ * @category layout
+ * @example
+ * <TLDR>
+ *   Migrating billing off the request path drops p99 from 8s to 40ms.
+ *   Two PRs, behind a feature flag.
+ * </TLDR>
+ */
 function TLDR({
   className,
   children,

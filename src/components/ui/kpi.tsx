@@ -15,6 +15,17 @@ const toneClass: Record<KPITone, string> = {
   info: "text-sky-500",
 };
 
+/**
+ * Responsive row of <KPI> children. Use to surface a handful of
+ * top-line metrics at the top of a status update or report.
+ *
+ * @category data
+ * @example
+ * <KPIGroup>
+ *   <KPI value="8.3s" label="p99 today" tone="err" />
+ *   <KPI value="42ms" label="p99 after" tone="ok" trend="projected" />
+ * </KPIGroup>
+ */
 function KPIGroup({
   className,
   children,
@@ -34,6 +45,14 @@ function KPIGroup({
   );
 }
 
+/**
+ * Big-number metric: large light-serif value, uppercase sans label
+ * below, optional trend annotation. Lives inside a <KPIGroup>.
+ *
+ * @category data
+ * @example
+ * <KPI value="99.95%" label="uptime" tone="ok" trend="↑ 0.02 vs last week" />
+ */
 function KPI({
   value,
   label,
@@ -42,9 +61,13 @@ function KPI({
   className,
   ...props
 }: React.ComponentProps<"div"> & {
+  /** The number (or short string) shown large. */
   value: string | number;
+  /** Caption under the value. Kept short. */
   label: string;
+  /** Optional sub-line — direction, comparison, "projected", etc. */
   trend?: string;
+  /** Colour cue for the value. */
   tone?: KPITone;
 }) {
   return (

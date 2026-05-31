@@ -26,12 +26,28 @@ const pillClass: Record<StepStatus, string> = {
   blocked: "bg-red-500/15 text-red-400",
 };
 
+/**
+ * Plan-card list of <Step> children. Wrap a sequence of actions /
+ * milestones whose state matters (todo / doing / done / blocked).
+ * For a flat unordered list of bullets, use plain markdown instead.
+ *
+ * @category layout
+ * @example
+ * <Steps title="Cutover plan">
+ *   <Step title="Add the queue" status="done">SQS FIFO with DLQ.</Step>
+ *   <Step title="Carve out worker" status="doing">cmd/billing-worker.</Step>
+ *   <Step title="Cut over + watch" status="todo" />
+ * </Steps>
+ */
 function Steps({
   title,
   className,
   children,
   ...props
-}: React.ComponentProps<"div"> & { title?: string }) {
+}: React.ComponentProps<"div"> & {
+  /** Optional header label rendered inside the card. */
+  title?: string;
+}) {
   return (
     <div
       data-slot="steps"
@@ -62,6 +78,17 @@ function Steps({
   );
 }
 
+/**
+ * One row inside a <Steps>. The title is required; the body
+ * (children) is optional supporting detail. Status colours the
+ * indicator and pill.
+ *
+ * @category layout
+ * @example
+ * <Step title="Add the `billing-events` queue" status="done">
+ *   SQS FIFO, dead-letter queue with 5-attempt cap.
+ * </Step>
+ */
 function Step({
   title,
   status,
@@ -69,7 +96,9 @@ function Step({
   children,
   ...props
 }: React.ComponentProps<"li"> & {
+  /** Short summary of what the step is. */
   title: string;
+  /** Visual state. Defaults to "todo". */
   status?: StepStatus;
 }) {
   const s = status ?? "todo";

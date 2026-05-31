@@ -4,6 +4,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Side-by-side panels for weighing 2-3 options. Each child is an
+ * <Option>. Use for "should we do X or Y" framing, tradeoff
+ * exploration, or before/after comparisons.
+ *
+ * @category layout
+ * @example
+ * <Compare>
+ *   <Option label="Status quo">Sync call to Stripe. Easy, blocks request.</Option>
+ *   <Option label="Async webhook">Queue + worker. Safer p99, more pieces.</Option>
+ * </Compare>
+ */
 function Compare({
   className,
   children,
@@ -23,12 +35,25 @@ function Compare({
   );
 }
 
+/**
+ * One panel inside a <Compare>. The label is the short heading; the
+ * children are the supporting argument.
+ *
+ * @category layout
+ * @example
+ * <Option label="Async webhook (proposed)">
+ *   Request handler queues a job and returns immediately.
+ * </Option>
+ */
 function Option({
   label,
   className,
   children,
   ...props
-}: React.ComponentProps<"div"> & { label: string }) {
+}: React.ComponentProps<"div"> & {
+  /** Short heading for this option. */
+  label: string;
+}) {
   return (
     <div data-slot="compare-option" className={cn("sm:pl-6 sm:first:pl-0", className)} {...props}>
       <div

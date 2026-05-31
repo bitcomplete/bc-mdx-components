@@ -12,8 +12,8 @@ describe("compileMDX", () => {
     const { html } = compileMDX(
       `<Callout type="warning">Heads up</Callout>`,
     );
-    expect(html).toContain("bc-callout");
-    expect(html).toContain("bc-callout-warning");
+    expect(html).toContain(`data-slot="callout"`);
+    expect(html).toContain(`data-tone="warning"`);
     expect(html).toContain("Heads up");
   });
 
@@ -21,9 +21,10 @@ describe("compileMDX", () => {
     const { html } = compileMDX(
       `<KPIGroup><KPI value="42" label="users" /><KPI value="3" label="errors" tone="err" /></KPIGroup>`,
     );
-    expect(html).toContain("bc-kpi-group");
-    expect(html.match(/bc-kpi-value/g)?.length).toBe(2);
-    expect(html).toContain("bc-kpi-err");
+    expect(html).toContain(`data-slot="kpi-group"`);
+    expect(html.match(/data-slot="kpi-value"/g)?.length).toBe(2);
+    // tone="err" colors the value red
+    expect(html).toContain("text-red-500");
   });
 
   it("renders Steps with statuses", () => {
@@ -34,16 +35,16 @@ describe("compileMDX", () => {
   <Step title="Three" status="todo" />
 </Steps>
 `);
-    expect(html).toContain("bc-step-status-done");
-    expect(html).toContain("bc-step-status-doing");
-    expect(html).toContain("bc-step-status-todo");
+    expect(html).toContain(`data-status="done"`);
+    expect(html).toContain(`data-status="doing"`);
+    expect(html).toContain(`data-status="todo"`);
   });
 
   it("includes a document wrapper with stylesheet", () => {
     const r = compileMDX("# hi");
     expect(r.document).toContain("<!doctype html>");
     expect(r.document).toContain("<style>");
-    expect(r.document).toContain(".bc-callout");
+    expect(r.document).toContain("tailwindcss");
     expect(r.document).toContain('class="bc-doc"');
   });
 
@@ -57,9 +58,10 @@ describe("compileMDX", () => {
     const { html } = compileMDX(
       `<ToolCall name="bash" status="ok" timing="0.4s" args="go test ./..." />`,
     );
-    expect(html).toContain("bc-tool");
-    expect(html).toContain("bc-tool-status-ok");
+    expect(html).toContain(`data-slot="tool-call"`);
+    expect(html).toContain(`data-status="ok"`);
     expect(html).toContain("bash");
+    // args render only inside the expanded panel, not the summary
     expect(html).toContain("go test ./...");
   });
 
@@ -67,7 +69,8 @@ describe("compileMDX", () => {
     const { html } = compileMDX(
       `<Finding code="X-1" title="problem" severity="high">desc</Finding>`,
     );
-    expect(html).toContain("bc-finding-high");
+    expect(html).toContain(`data-slot="finding"`);
+    expect(html).toContain(`data-severity="high"`);
     expect(html).toContain("X-1");
     expect(html).toContain("problem");
   });

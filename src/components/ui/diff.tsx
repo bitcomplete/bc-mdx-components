@@ -1,6 +1,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Two-column before/after — red bar on the left side, green on the
+ * right. Use for explicit change comparisons; for weighing
+ * alternatives that aren't a strict before→after, use <Compare>.
+ *
+ * @category data
+ * @example
+ * <Diff
+ *   before="Synchronous Stripe call from request handler"
+ *   after="Worker reads from SQS, retries with token bucket"
+ * />
+ */
 function Diff({
   before,
   after,
@@ -9,9 +21,13 @@ function Diff({
   className,
   ...props
 }: React.ComponentProps<"div"> & {
+  /** Left column content (the previous state). */
   before: React.ReactNode;
+  /** Right column content (the new state). */
   after: React.ReactNode;
+  /** Override the left-column label. */
   beforeLabel?: string;
+  /** Override the right-column label. */
   afterLabel?: string;
 }) {
   return (

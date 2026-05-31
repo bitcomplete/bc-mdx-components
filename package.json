@@ -37,9 +37,10 @@
   ],
   "scripts": {
     "build:css": "tailwindcss -i src/styles/tailwind.css -o dist/styles.css --minify && node scripts/embed-css.mjs",
+    "build:manifest": "node scripts/extract-manifest.mjs",
     "build:js": "tsup",
-    "build": "pnpm run build:css && pnpm run build:js",
-    "dev": "pnpm run build:css && tsup --watch",
+    "build": "pnpm run build:manifest && pnpm run build:css && pnpm run build:js",
+    "dev": "pnpm run build:manifest && pnpm run build:css && tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -61,6 +62,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "tailwindcss": "^4.2.1",
+    "ts-morph": "^28.0.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

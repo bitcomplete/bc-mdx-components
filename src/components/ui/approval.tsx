@@ -11,6 +11,20 @@ const stateClass: Record<ApprovalState, string> = {
   pending: "bg-muted text-muted-foreground",
 };
 
+/**
+ * Snapshot of an approval decision — what was requested, whether it
+ * was approved, who decided, when. Static record, not an interactive
+ * widget; for that, fold the decision into the surrounding prose.
+ *
+ * @category agent
+ * @example
+ * <Approval
+ *   action="Send findings report to evaluation@bsi.bund.de"
+ *   approved={true}
+ *   by="terra@bitcomplete.io"
+ *   at="2026-05-30 14:02 UTC"
+ * />
+ */
 function Approval({
   action,
   approved,
@@ -20,9 +34,13 @@ function Approval({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
+  /** Short description of what was being approved. */
   action: string;
+  /** undefined → pending, true → approved, false → denied. */
   approved?: boolean;
+  /** Approver identifier (email, handle). */
   by?: string;
+  /** Timestamp string. */
   at?: string;
 }) {
   const state: ApprovalState =

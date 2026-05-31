@@ -115,6 +115,17 @@ const statusIconClass: Record<ToolStatus, string> = {
   skip: "text-muted-foreground/50",
 };
 
+/**
+ * Single tool invocation row. Collapsible: clicking the row opens
+ * args + output. Failed calls open by default and gain the "failed ·"
+ * timing prefix.
+ *
+ * @category agent
+ * @example
+ * <ToolCall name="bash" status="ok" timing="0.4s" args='go test ./...'>
+ *   ok  github.com/bitcomplete/pin/internal/auth  0.418s
+ * </ToolCall>
+ */
 export function ToolCall({
   name,
   label,
@@ -325,10 +336,24 @@ function parseArgsAsKV(args: string): Array<[string, string]> | null {
 // to visually associate the calls. Each child <details> still
 // toggles independently.
 
+/**
+ * Rounded frame around several adjacent <ToolCall>s. Pure visual
+ * grouping — no header, no shared toggle. For a labelled, collapsible
+ * parent (e.g. "Running 3 in parallel"), use <ToolTree> instead.
+ *
+ * @category agent
+ * @example
+ * <ToolCallGroup>
+ *   <ToolCall name="search" status="ok" />
+ *   <ToolCall name="read" status="ok" />
+ *   <ToolCall name="edit" status="ok" />
+ * </ToolCallGroup>
+ */
 export function ToolCallGroup({
   className,
   children,
 }: {
+  /** Extra classes; rarely needed. */
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -350,11 +375,27 @@ export function ToolCallGroup({
 // in parallel" pattern. Children are indented with an L-connector
 // spine. Default collapsed.
 
+/**
+ * Labelled, collapsible group of tool calls — the "Running N in
+ * parallel" pattern. Header summary at top, L-connectored children
+ * inside. Use when the calls share a higher-level purpose worth
+ * naming; for an unlabelled visual frame, use <ToolCallGroup>.
+ *
+ * @category agent
+ * @example
+ * <ToolTree label="Running 3 tasks in parallel">
+ *   <ToolCall name="search" status="ok" />
+ *   <ToolCall name="read" status="ok" />
+ *   <ToolCall name="grep" status="ok" />
+ * </ToolTree>
+ */
 export function ToolTree({
   label = "Running tools",
   children,
 }: {
+  /** Header shown above the children. */
   label?: string;
+  /** Open by default? Defaults to false. */
   defaultOpen?: boolean;
   children?: React.ReactNode;
 }) {

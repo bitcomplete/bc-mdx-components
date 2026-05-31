@@ -11,12 +11,24 @@ const colorClass: Record<TagColor, string> = {
   success: "bg-emerald-500/10 text-emerald-500",
 };
 
+/**
+ * Small inline pill for short labels — "v2", "draft", "behind flag".
+ * Distinct from <Status> in that there's no dot and the colour is
+ * just decorative.
+ *
+ * @category data
+ * @example
+ * Status: <Tag color="warning">latency-bound</Tag>.
+ */
 function Tag({
   color = "default",
   className,
   children,
   ...props
-}: React.ComponentProps<"span"> & { color?: TagColor }) {
+}: React.ComponentProps<"span"> & {
+  /** Pill colour. */
+  color?: TagColor;
+}) {
   return (
     <span
       data-slot="tag"
@@ -32,12 +44,24 @@ function Tag({
   );
 }
 
+/**
+ * Inline state indicator: a coloured dot + label. Distinct from
+ * <Tag> in that the dot communicates a binary/categorical state at
+ * a glance.
+ *
+ * @category data
+ * @example
+ * <Status state="ok">In progress</Status>
+ */
 function Status({
   state,
   className,
   children,
   ...props
-}: React.ComponentProps<"span"> & { state: "ok" | "warn" | "err" | "info" }) {
+}: React.ComponentProps<"span"> & {
+  /** Which state colour to show. */
+  state: "ok" | "warn" | "err" | "info";
+}) {
   const dotClass = {
     ok: "bg-emerald-500",
     warn: "bg-amber-500",

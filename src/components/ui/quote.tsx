@@ -1,12 +1,26 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Pull quote — italic serif body with a thin left rule and optional
+ * attribution. Use for important things someone said, never for the
+ * agent's own paragraphs.
+ *
+ * @category emphasis
+ * @example
+ * <Quote author="Rich Hickey">
+ *   Simple is not the same as easy.
+ * </Quote>
+ */
 function Quote({
   author,
   className,
   children,
   ...props
-}: React.ComponentProps<"figure"> & { author?: string }) {
+}: React.ComponentProps<"figure"> & {
+  /** Optional attribution shown under the quote. */
+  author?: string;
+}) {
   return (
     <figure
       data-slot="quote"

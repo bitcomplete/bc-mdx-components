@@ -19,6 +19,19 @@
 import * as React from "react";
 import { cn } from "@/lib/utils.js";
 
+/**
+ * Rounded container around a chat transcript. Children are
+ * <UserMessage>, <AssistantMessage>, <SystemMessage>, optionally
+ * <Thinking>. Use to share a session, a worked-through dialogue,
+ * a Q&A — anything that reads as turns.
+ *
+ * @category conversation
+ * @example
+ * <Conversation>
+ *   <UserMessage>What's our SLO?</UserMessage>
+ *   <AssistantMessage>1.5s p99. We've been blowing it.</AssistantMessage>
+ * </Conversation>
+ */
 function Conversation({
   className,
   children,
@@ -38,6 +51,14 @@ function Conversation({
   );
 }
 
+/**
+ * Right-aligned chat bubble for the human's turn. Sans, 75% max
+ * width. Markdown inside renders normally.
+ *
+ * @category conversation
+ * @example
+ * <UserMessage>Can you list the SFRs missing from the mapping?</UserMessage>
+ */
 function UserMessage({
   className,
   children,
@@ -64,6 +85,17 @@ function UserMessage({
   );
 }
 
+/**
+ * Left-aligned agent turn. Serif body, no bubble, 85% max width.
+ * Contains the agent's prose plus any <ToolCall>s the turn produced.
+ *
+ * @category conversation
+ * @example
+ * <AssistantMessage>
+ *   Found three missing SFRs. Let me list them.
+ *   <ToolCall name="search" status="ok" />
+ * </AssistantMessage>
+ */
 function AssistantMessage({
   className,
   children,
@@ -88,6 +120,14 @@ function AssistantMessage({
   );
 }
 
+/**
+ * Centred system notice — "Agent connected to repo", "Session
+ * resumed", etc. Small muted pill.
+ *
+ * @category conversation
+ * @example
+ * <SystemMessage>Agent connected to document repository</SystemMessage>
+ */
 function SystemMessage({
   className,
   children,
@@ -106,6 +146,16 @@ function SystemMessage({
   );
 }
 
+/**
+ * Tiny italic "Thinking" indicator placed above an <AssistantMessage>.
+ * Use to signal the agent is reasoning before it replies — usually
+ * paired with an empty assistant turn in a live demo.
+ *
+ * @category conversation
+ * @example
+ * <Thinking>Thinking…</Thinking>
+ * <AssistantMessage>Here's what I found.</AssistantMessage>
+ */
 function Thinking({
   className,
   children = "Thinking",

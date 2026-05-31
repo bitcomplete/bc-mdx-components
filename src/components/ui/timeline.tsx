@@ -13,6 +13,18 @@ const markerClass: Record<EventTone | "default", string> = {
   info: "border-sky-500",
 };
 
+/**
+ * Vertical event sequence with a spine and marker dots. Use for
+ * milestones, release timelines, postmortem chronologies — anything
+ * ordered by when.
+ *
+ * @category chronological
+ * @example
+ * <Timeline>
+ *   <Event time="Week 1" title="Queue + worker land behind feature flag" />
+ *   <Event time="Week 2" title="Cutover ramp begins" tone="ok" />
+ * </Timeline>
+ */
 function Timeline({
   className,
   children,
@@ -32,6 +44,16 @@ function Timeline({
   );
 }
 
+/**
+ * One marker on a <Timeline>. Either the time, the title, or both —
+ * pick whichever reads cleanly for your sequence.
+ *
+ * @category chronological
+ * @example
+ * <Event time="2026-05-30" title="Tag 19 reconciled" tone="ok">
+ *   BrowserOrBearer middleware live.
+ * </Event>
+ */
 function Event({
   time,
   tone,
@@ -40,8 +62,11 @@ function Event({
   children,
   ...props
 }: React.ComponentProps<"li"> & {
+  /** When it happened (free-form string). */
   time?: string;
+  /** Marker dot colour. */
   tone?: EventTone;
+  /** Short headline. */
   title?: string;
 }) {
   return (

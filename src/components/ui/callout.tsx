@@ -38,6 +38,17 @@ const iconClass: Record<CalloutType, string> = {
   note: "text-muted-foreground",
 };
 
+/**
+ * Coloured aside — info / warning / danger / success / note. Use it
+ * to surface "be careful", "important", or "good to know" alongside
+ * the main text flow.
+ *
+ * @category emphasis
+ * @example
+ * <Callout type="warning" title="Heads up">
+ *   Don't merge this on a Friday.
+ * </Callout>
+ */
 function Callout({
   type = "info",
   title,
@@ -45,7 +56,9 @@ function Callout({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
+  /** Visual tone of the callout. */
   type?: CalloutType;
+  /** Optional bold title shown above the body. */
   title?: string;
 }) {
   return (

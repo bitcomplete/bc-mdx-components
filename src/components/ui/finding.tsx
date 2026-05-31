@@ -19,6 +19,18 @@ const sevDotClass: Record<Severity, string> = {
   critical: "bg-red-600",
 };
 
+/**
+ * Single bulleted finding — issue, risk, surprise, or gotcha. Severity
+ * colours the bullet. Use a sequence of <Finding>s for review notes,
+ * audit results, postmortem observations.
+ *
+ * @category agent
+ * @example
+ * <Finding code="BILL-014" title="Retries can DDoS Stripe" severity="high">
+ *   3× exponential backoff hits Stripe hardest when it's already
+ *   slow. Move retries to the worker with a token bucket.
+ * </Finding>
+ */
 function Finding({
   code,
   title,
@@ -27,8 +39,11 @@ function Finding({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
+  /** Optional short identifier (e.g. ticket / rule code). */
   code?: string;
+  /** Short headline. */
   title: string;
+  /** Visual + semantic weight. */
   severity?: Severity;
 }) {
   // Render as <div role="listitem"> so a bare <Finding> outside any
@@ -75,8 +90,17 @@ function Finding({
   );
 }
 
-// Optional wrapper — pulls a group of findings into a tighter
-// `role="list"` container with less surrounding spacing.
+/**
+ * Optional grouping wrapper around several <Finding>s. Tightens the
+ * vertical spacing so a long list reads as one block.
+ *
+ * @category agent
+ * @example
+ * <Findings>
+ *   <Finding title="Missing key destruction" severity="high" />
+ *   <Finding title="Stale algorithm reference" severity="medium" />
+ * </Findings>
+ */
 function Findings({
   className,
   children,
