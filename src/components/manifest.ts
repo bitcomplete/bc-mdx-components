@@ -423,6 +423,55 @@ export const componentManifest = [
   },
   {
     "kind": "mdx-component",
+    "name": "Subagent",
+    "summary": "Subagent invocation card — a labelled identity, the prompt collapsed for reference, and the final report rendered as prose. Use for any dispatched task (Task / Agent tool call) where the work happened in a separate context that the recipient should be able to see and inspect.",
+    "category": "agent",
+    "spec": {
+      "props": [
+        {
+          "name": "name",
+          "type": "string",
+          "optional": true,
+          "description": "Short label for what the subagent was asked to do."
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "optional": true,
+          "description": "Agent type (e.g. \"general-purpose\", \"Explore\", \"Plan\")."
+        },
+        {
+          "name": "status",
+          "type": "\"running\" | \"ok\" | \"fail\" | \"skip\"",
+          "optional": true,
+          "default": "\"ok\""
+        },
+        {
+          "name": "timing",
+          "type": "string",
+          "optional": true,
+          "description": "Optional duration to show in the header (e.g. \"14.3s\")."
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "optional": true,
+          "description": "The full prompt the agent was launched with. Rendered inside a\ncollapsed details panel so the report stays the focal point."
+        },
+        {
+          "name": "children",
+          "type": "React.ReactNode",
+          "optional": true,
+          "description": "The agent's final report, as MDX."
+        }
+      ]
+    },
+    "examples": [
+      "<Subagent name=\"Branch ship-readiness audit\" type=\"general-purpose\" status=\"ok\" prompt=\"Audit what's left before this branch can ship...\">\n\nTwo things left: the GrowthBook gate isn't wired (`internal/flags/billing.go:42`)\nand CI hasn't seen this branch yet. Everything else is green.\n\n</Subagent>"
+    ]
+  },
+  {
+    "kind": "mdx-component",
     "name": "SystemMessage",
     "summary": "Centred system notice — \"Agent connected to repo\", \"Session resumed\", etc. Small muted pill.",
     "category": "conversation",
@@ -522,6 +571,13 @@ export const componentManifest = [
           "name": "args",
           "type": "string",
           "optional": true
+        },
+        {
+          "name": "outputType",
+          "type": "\"code\" | \"prose\"",
+          "optional": true,
+          "default": "\"code\"",
+          "description": "How to render the output body. \"code\" (default) wraps children in\na monospace pre-style container — right for shell output, raw\nstdout, JSON payloads. \"prose\" skips the mono wrapper so markdown\nchildren render with normal typography — right for Skill bodies\nor anything that ships as formatted text."
         },
         {
           "name": "children",

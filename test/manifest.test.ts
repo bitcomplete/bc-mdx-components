@@ -2,8 +2,14 @@ import { describe, it, expect } from "vitest";
 import { componentManifest } from "../src/components/manifest.js";
 
 describe("componentManifest", () => {
-  it("contains all 28 user-facing components", () => {
-    expect(componentManifest.length).toBe(28);
+  it("contains all 29 user-facing components", () => {
+    expect(componentManifest.length).toBe(29);
+  });
+
+  it("includes Subagent in the agent category", () => {
+    const s = componentManifest.find((e) => e.name === "Subagent");
+    expect(s).toBeDefined();
+    expect(s!.category).toBe("agent");
   });
 
   it("includes a Callout entry with literal-union type", () => {

@@ -53,6 +53,7 @@ export { Section } from "./ui/section.js";
 export { Quote } from "./ui/quote.js";
 export { Code } from "./ui/code.js";
 export { Diagram } from "./ui/diagram.js";
+export { Subagent } from "./ui/subagent.js";
 export {
   Conversation,
   UserMessage,
@@ -132,6 +133,7 @@ export function ToolCall({
   status = "ok",
   timing,
   args,
+  outputType = "code",
   children,
 }: {
   name: string;
@@ -140,6 +142,14 @@ export function ToolCall({
   status?: ToolStatus;
   timing?: string;
   args?: string;
+  /**
+   * How to render the output body. "code" (default) wraps children in
+   * a monospace pre-style container — right for shell output, raw
+   * stdout, JSON payloads. "prose" skips the mono wrapper so markdown
+   * children render with normal typography — right for Skill bodies
+   * or anything that ships as formatted text.
+   */
+  outputType?: "code" | "prose";
   children?: React.ReactNode;
 }) {
   const icon: IconSvgElement =
@@ -227,7 +237,7 @@ export function ToolCall({
       <div data-slot="tool-call-content" className="pl-7 pt-1 pb-3 space-y-3">
         {args ? <ToolCallArgs args={args} /> : null}
         {children ? (
-          <ToolCallOutput isFail={isFail}>{children}</ToolCallOutput>
+          <ToolCallOutput isFail={isFail} variant={outputType}>{children}</ToolCallOutput>
         ) : null}
       </div>
     </details>
@@ -265,22 +275,28 @@ function ToolCallArgs({ args }: { args: string }) {
 
 function ToolCallOutput({
   isFail,
+  variant = "code",
   children,
 }: {
   isFail: boolean;
+  variant?: "code" | "prose";
   children: React.ReactNode;
 }) {
+  // "code" keeps the original mono pre-style frame for raw output.
+  // "prose" hands children off to the document's normal prose styling
+  // (headings, paragraphs, lists, inline code) — used by Skill bodies
+  // where the recipient should be able to read the loaded markdown.
+  const proseClasses = "rounded-md border border-border/40 bg-muted/30 px-4 py-3 text-sm leading-normal [&>:first-child]:mt-0 [&>:last-child]:mb-0";
+  const codeClasses = cn(
+    "rounded-md bg-muted/40 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words [&_p]:font-mono [&_p]:text-xs [&_p]:m-0 [&_p+p]:mt-1.5",
+    isFail ? "text-red-400/90" : "text-foreground/90",
+  );
   return (
     <section data-slot="tool-call-output">
       <SectionLabel tone={isFail ? "fail" : undefined}>
         {isFail ? "error" : "output"}
       </SectionLabel>
-      <div
-        className={cn(
-          "rounded-md bg-muted/40 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words [&_p]:font-mono [&_p]:text-xs [&_p]:m-0 [&_p+p]:mt-1.5",
-          isFail ? "text-red-400/90" : "text-foreground/90",
-        )}
-      >
+      <div className={variant === "prose" ? proseClasses : codeClasses}>
         {children}
       </div>
     </section>
