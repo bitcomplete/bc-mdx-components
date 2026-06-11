@@ -1,6 +1,6 @@
 {
   "name": "@bitcomplete/mdx-components",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MDX components for agent-generated documents: plans, reports, session summaries. Static HTML output with Agentic Craft visuals, no React runtime needed in the browser.",
   "keywords": [
     "mdx",
