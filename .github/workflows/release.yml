@@ -1,0 +1,58 @@
+name: release
+
+# Cut a GitHub Release with the built bundle on every push to main.
+# Downstream consumers (pin) fetch dist/bundle.iife.global.js from the
+# latest release instead of someone hand-copying a local build — see
+# pin's bump-mdx-bundle workflow.
+#
+# Tag scheme: vYYYY.MM.DD.r<run_number>[.<run_attempt>] — date for
+# humans, run number for uniqueness when several merges land the same
+# day, attempt suffix so re-runs don't collide (same scheme as
+# bc-github-actions releases).
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Verify IIFE bundle is self-contained
+        run: |
+          test -f dist/bundle.iife.global.js
+          node -e "const fs=require('fs');const src=fs.readFileSync('dist/bundle.iife.global.js','utf8');if(!src.includes('compileMDX'))process.exit(1)"
+      - name: Compute release tag
+        id: tag
+        run: |
+          DATE=$(date -u +%Y.%m.%d)
+          TAG="v${DATE}.r${GITHUB_RUN_NUMBER}"
+          if [ "${GITHUB_RUN_ATTEMPT}" != "1" ]; then
+            TAG="${TAG}.${GITHUB_RUN_ATTEMPT}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+      - name: Create release with bundle asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum dist/bundle.iife.global.js > dist/bundle.iife.global.js.sha256
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            dist/bundle.iife.global.js \
+            dist/bundle.iife.global.js.sha256 \
+            --title "${{ steps.tag.outputs.tag }}" \
+            --notes "Built from ${GITHUB_SHA}. Bundle for v8go embedding (pin et al.)."
