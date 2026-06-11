@@ -1,14 +1,19 @@
 name: release
 
-# Publish @bitcomplete/mdx-components to npm when the version in
-# package.json changes on main. Releases are intentional: bump the
-# version in a PR, merge, and this workflow publishes that exact
-# version with npm provenance, tags vX.Y.Z, and attaches the built
-# bundle to a GitHub Release for humans.
+# Release @bitcomplete/mdx-components when the version in package.json
+# changes on main. Releases are intentional: bump the version in a PR,
+# merge, and this workflow releases that exact version — tag vX.Y.Z +
+# GitHub Release with the built bundle attached, and (when NPM_TOKEN is
+# configured) an npm publish with provenance.
+#
+# TEMPORARY: npm publish is skipped while the NPM_TOKEN secret is
+# absent — the GitHub Release is the artifact channel until the
+# @bitcomplete npm org access is sorted. Downstream (pin's
+# bump-mdx-bundle workflow) prefers npm and falls back to the GitHub
+# Release asset.
 #
 # Pushes to main that don't change the version are no-ops here (ci.yml
-# still tests every push). Downstream consumers (pin) pull the bundle
-# from the published npm tarball — see pin's bump-mdx-bundle workflow.
+# still tests every push).
 
 on:
   push:
@@ -33,14 +38,16 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
 
-      - name: Check if this version is already published
+      - name: Check if this version is already released
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           echo "version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
-          if npm view "@bitcomplete/mdx-components@${PKG_VERSION}" version >/dev/null 2>&1; then
+          if gh release view "v${PKG_VERSION}" >/dev/null 2>&1; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-            echo "v${PKG_VERSION} already on npm; nothing to release"
+            echo "v${PKG_VERSION} already released; nothing to do"
           else
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
@@ -57,8 +64,20 @@ jobs:
           test -f dist/bundle.iife.global.js
           node -e "const fs=require('fs');const src=fs.readFileSync('dist/bundle.iife.global.js','utf8');if(!src.includes('compileMDX'))process.exit(1)"
 
+      - name: Check npm token availability
+        id: npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "${NPM_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_TOKEN not configured — skipping npm publish, GitHub Release only"
+          fi
+
       - name: Publish to npm
-        if: steps.version.outputs.publish == 'true'
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.available == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --access public --provenance --no-git-checks
@@ -74,4 +93,4 @@ jobs:
             dist/bundle.iife.global.js \
             dist/bundle.iife.global.js.sha256 \
             --title "${TAG}" \
-            --notes "Published to npm as @bitcomplete/mdx-components@${{ steps.version.outputs.version }} (from ${GITHUB_SHA})."
+            --notes "@bitcomplete/mdx-components ${TAG} (from ${GITHUB_SHA}). npm publish: ${{ steps.npm.outputs.available }}."
