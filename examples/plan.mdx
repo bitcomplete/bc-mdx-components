@@ -1,7 +1,7 @@
 # Move the billing service to async webhooks
 
 <TLDR>
-The billing service currently blocks request handlers for up to 8 seconds while it talks to Stripe. Move the Stripe call into a queued worker so request handlers return in <100ms. Two PRs: queue plumbing + worker.
+The billing service currently blocks request handlers for up to 8 seconds while it talks to Stripe. Move the Stripe call into a queued worker so request handlers return in \<100ms. Two PRs: queue plumbing + worker.
 </TLDR>
 
 ## Why now
