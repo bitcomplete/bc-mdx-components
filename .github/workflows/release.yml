@@ -88,7 +88,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
-          sha256sum dist/bundle.iife.global.js > dist/bundle.iife.global.js.sha256
+          # Bare filename in the checksum file — consumers download the
+          # asset flat and run `sha256sum -c` next to it.
+          (cd dist && sha256sum bundle.iife.global.js > bundle.iife.global.js.sha256)
           gh release create "${TAG}" \
             dist/bundle.iife.global.js \
             dist/bundle.iife.global.js.sha256 \
