@@ -26,5 +26,13 @@ export default defineConfig([
     minify: true,
     noExternal: [/.*/],
     platform: "neutral",
+    // Replace process.env.NODE_ENV at build time so React's production
+    // bundle doesn't reference `process` (undefined inside v8go).
+    define: {
+      "process.env.NODE_ENV": '"production"',
+      "process.env.NODE_DEBUG": "undefined",
+      "process.platform": '"browser"',
+      "process.version": '"v0.0.0"',
+    },
   },
 ]);

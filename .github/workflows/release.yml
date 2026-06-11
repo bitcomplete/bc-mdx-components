@@ -1,0 +1,96 @@
+name: release
+
+# Release @bitcomplete/mdx-components when the version in package.json
+# changes on main. Releases are intentional: bump the version in a PR,
+# merge, and this workflow releases that exact version — tag vX.Y.Z +
+# GitHub Release with the built bundle attached, and (when NPM_TOKEN is
+# configured) an npm publish with provenance.
+#
+# TEMPORARY: npm publish is skipped while the NPM_TOKEN secret is
+# absent — the GitHub Release is the artifact channel until the
+# @bitcomplete npm org access is sorted. Downstream (pin's
+# bump-mdx-bundle workflow) prefers npm and falls back to the GitHub
+# Release asset.
+#
+# Pushes to main that don't change the version are no-ops here (ci.yml
+# still tests every push).
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  id-token: write # npm provenance attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check if this version is already released
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
+          if gh release view "v${PKG_VERSION}" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "v${PKG_VERSION} already released; nothing to do"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: pnpm typecheck
+        if: steps.version.outputs.publish == 'true'
+      - run: pnpm test
+        if: steps.version.outputs.publish == 'true'
+      - run: pnpm build
+        if: steps.version.outputs.publish == 'true'
+      - name: Verify IIFE bundle is self-contained
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          test -f dist/bundle.iife.global.js
+          node -e "const fs=require('fs');const src=fs.readFileSync('dist/bundle.iife.global.js','utf8');if(!src.includes('compileMDX'))process.exit(1)"
+
+      - name: Check npm token availability
+        id: npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "${NPM_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_TOKEN not configured — skipping npm publish, GitHub Release only"
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.available == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --access public --provenance --no-git-checks
+
+      - name: Tag + GitHub Release
+        if: steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          sha256sum dist/bundle.iife.global.js > dist/bundle.iife.global.js.sha256
+          gh release create "${TAG}" \
+            dist/bundle.iife.global.js \
+            dist/bundle.iife.global.js.sha256 \
+            --title "${TAG}" \
+            --notes "@bitcomplete/mdx-components ${TAG} (from ${GITHUB_SHA}). npm publish: ${{ steps.npm.outputs.available }}."
