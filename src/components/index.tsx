@@ -3,11 +3,11 @@
 // `components` to MDXContent so authors don't need import statements.
 //
 // Structure mirrors the shadcn registry layout (`ui/`): components are
-// imported from `./ui/<name>`. Two of them (tool-call, tool-tree) are
-// vendored verbatim from agentic-craft's registry. The rest are local
-// implementations that mimic agentic-craft's editorial visual language
-// — they are intended to be replaced by registry components when (if)
-// the upstream project publishes them.
+// imported from `./ui/<name>`. Three of them (tool-call, tool-tree,
+// status-indicator) are installed from the agentic-craft shadcn
+// registry — run `pnpm registry:sync` to pull upstream updates; do not
+// edit those files by hand. The rest are local implementations that
+// mimic agentic-craft's editorial visual language.
 
 import * as React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -26,18 +26,22 @@ import {
 import type { IconSvgElement } from "@hugeicons/react";
 import { cn } from "@/lib/utils.js";
 
-// Vendored from agentic-craft registry —
-// https://github.com/arielconti10/agentic-craft/tree/main/registry/base-nova/ui
+// Installed from the agentic-craft registry (bitcomplete/agentic-craft)
+// via `npx shadcn add @agentic-craft/<name>` — see components.json.
 export {
   ToolCall as ToolCallPrimitive,
+  ToolCallTrigger,
   ToolCallLabel,
   ToolCallContent,
+  ToolCallError,
+  ToolCallRetry,
 } from "./ui/tool-call.js";
 export {
   ToolTree as ToolTreePrimitive,
   ToolTreeTrigger,
   ToolTreeContent,
 } from "./ui/tool-tree.js";
+export { StatusIndicator } from "./ui/status-indicator.js";
 
 export { TLDR } from "./ui/tldr.js";
 export { Callout } from "./ui/callout.js";
@@ -64,7 +68,7 @@ export {
 
 // ── ToolCall MDX wrapper ─────────────────────────────────────────────
 // Our MDX API is flat: `<ToolCall name="bash" status="ok" timing="0.4s"
-// args="..."/>`. The vendored primitive expects a hugeicons `icon`,
+// args="..."/>`. The registry primitive expects a hugeicons `icon`,
 // `<ToolCallLabel>`, and `<ToolCallContent>`. This wrapper translates.
 // status: "ok"|"fail"|"running"|"skip" maps to "completed"|"failed"|
 // "running"|"completed" (skip = quiet completed).
@@ -90,7 +94,7 @@ const iconByName: Record<string, IconSvgElement> = {
 
 type ToolStatus = "running" | "ok" | "fail" | "skip";
 
-// We render <details>/<summary> rather than the vendored React
+// We render <details>/<summary> rather than the registry's React
 // ToolCall/ToolTree from agentic-craft. Their primitives use
 // React.useState for expand/collapse — that works in their Next.js
 // app but pin ships static HTML with no React runtime in the browser,
@@ -407,6 +411,7 @@ export function ToolCallGroup({
  */
 export function ToolTree({
   label = "Running tools",
+  defaultOpen,
   children,
 }: {
   /** Header shown above the children. */
@@ -416,7 +421,11 @@ export function ToolTree({
   children?: React.ReactNode;
 }) {
   return (
-    <details data-slot="tool-tree" className="my-3 group/tree">
+    <details
+      data-slot="tool-tree"
+      open={defaultOpen || undefined}
+      className="my-3 group/tree"
+    >
       <summary className="flex cursor-pointer items-center gap-2 py-1.5 list-none [&::-webkit-details-marker]:hidden">
         <span className="relative inline-flex size-5 shrink-0 items-center justify-center">
           <HugeiconsIcon

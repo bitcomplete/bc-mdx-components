@@ -110,11 +110,15 @@ function collectPublicExports(indexFile) {
 // them in the manifest would only confuse agents.
 const INTERNAL_NAMES = new Set([
   "ToolCallPrimitive",
+  "ToolCallTrigger",
   "ToolCallLabel",
   "ToolCallContent",
+  "ToolCallError",
+  "ToolCallRetry",
   "ToolTreePrimitive",
   "ToolTreeTrigger",
   "ToolTreeContent",
+  "StatusIndicator",
 ]);
 
 function isComponentDeclaration(name, node) {

@@ -12,7 +12,9 @@ export default defineConfig([
     format: ["esm", "cjs"],
     dts: true,
     sourcemap: true,
-    clean: true,
+    // `clean` would delete dist/styles.css written by the earlier
+    // build:css step — the build script rm -rf's dist instead.
+    clean: false,
     target: "node20",
     splitting: false,
   },
