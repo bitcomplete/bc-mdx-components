@@ -53,6 +53,7 @@ export { Approval } from "./ui/approval.js";
 export { Timeline, Event } from "./ui/timeline.js";
 export { Tag, Status } from "./ui/tag.js";
 export { Diff } from "./ui/diff.js";
+export { CodeDiff } from "./ui/code-diff.js";
 export { Section } from "./ui/section.js";
 export { Quote } from "./ui/quote.js";
 export { Code } from "./ui/code.js";

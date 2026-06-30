@@ -2,8 +2,14 @@ import { describe, it, expect } from "vitest";
 import { componentManifest } from "../src/components/manifest.js";
 
 describe("componentManifest", () => {
-  it("contains all 29 user-facing components", () => {
-    expect(componentManifest.length).toBe(29);
+  it("contains all 30 user-facing components", () => {
+    expect(componentManifest.length).toBe(30);
+  });
+
+  it("includes CodeDiff in the data category", () => {
+    const c = componentManifest.find((e) => e.name === "CodeDiff");
+    expect(c).toBeDefined();
+    expect(c!.category).toBe("data");
   });
 
   it("includes Subagent in the agent category", () => {
