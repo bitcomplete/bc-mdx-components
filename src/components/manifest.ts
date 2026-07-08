@@ -96,6 +96,18 @@ export const componentManifest = [
   },
   {
     "kind": "mdx-component",
+    "name": "CodeDiff",
+    "summary": "Embeds a real code diff inside a document. Wrap a ```diff fenced code block containing a unified patch (e.g. the output of `gh pr diff`), and the host renders it as a full, syntax-highlighted diff view in place of the plain fence.",
+    "category": "data",
+    "spec": {
+      "props": []
+    },
+    "examples": [
+      "<CodeDiff>\n\n```diff\ndiff --git a/server.go b/server.go\n--- a/server.go\n+++ b/server.go"
+    ]
+  },
+  {
+    "kind": "mdx-component",
     "name": "Compare",
     "summary": "Side-by-side panels for weighing 2-3 options. Each child is an <Option>. Use for \"should we do X or Y\" framing, tradeoff exploration, or before/after comparisons.",
     "category": "layout",

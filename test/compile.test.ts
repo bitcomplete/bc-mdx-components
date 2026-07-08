@@ -17,6 +17,17 @@ describe("compileMDX", () => {
     expect(html).toContain("Heads up");
   });
 
+  it("marks a CodeDiff for host-side diff rendering", () => {
+    const { html } = compileMDX(
+      "<CodeDiff>\n\n```diff\ndiff --git a/x b/x\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-old\n+new\n```\n\n</CodeDiff>",
+    );
+    // Emits the marker the host keys off, wrapping the language-diff fence
+    // with the patch preserved for the host to render.
+    expect(html).toContain(`data-slot="code-diff"`);
+    expect(html).toContain(`class="language-diff"`);
+    expect(html).toContain("diff --git a/x b/x");
+  });
+
   it("renders nested components", () => {
     const { html } = compileMDX(
       `<KPIGroup><KPI value="42" label="users" /><KPI value="3" label="errors" tone="err" /></KPIGroup>`,
